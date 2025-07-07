@@ -1,0 +1,8 @@
+{
+    "python.defaultInterpreter": "./env/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.analysis.extraPaths": ["./env/Lib/site-packages"]
+}
