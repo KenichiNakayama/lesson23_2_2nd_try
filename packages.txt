@@ -1,4 +1,3 @@
-# システムレベルの依存関係（必要に応じて）
-# build-essential
-# curl
-# git
+build-essential
+curl
+git
