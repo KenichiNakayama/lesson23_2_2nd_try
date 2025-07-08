@@ -48,6 +48,7 @@ TEMPERATURE = 0.5
 # ==========================================
 RAG_TOP_FOLDER_PATH = "./data"
 SUPPORTED_EXTENSIONS = {
+    ".txt": TextLoader,
     ".pdf": PyMuPDFLoader,
     ".docx": Docx2txtLoader,
     ".csv": lambda path: CSVLoader(path, encoding="utf-8")
@@ -55,6 +56,17 @@ SUPPORTED_EXTENSIONS = {
 WEB_URL_LOAD_TARGETS = [
     "https://generative-ai.web-camp.io/"
 ]
+
+# 問題2 マジックナンバーを修正
+# ==========================================
+# RAG設定系
+# ==========================================
+# ベクターストアから取得するドキュメント数
+RAG_SEARCH_K = 5
+# テキスト分割時のチャンクサイズ
+RAG_CHUNK_SIZE = 500
+# テキスト分割時のチャンクオーバーラップ
+RAG_CHUNK_OVERLAP = 50
 
 
 # ==========================================
