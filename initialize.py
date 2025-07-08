@@ -13,11 +13,26 @@ import sys
 import unicodedata
 from dotenv import load_dotenv
 import streamlit as st
-from docx import Document
-from langchain_community.document_loaders import WebBaseLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+
+# 条件付きインポート（エラー時はNoneを設定）
+try:
+    from docx import Document
+except ImportError:
+    Document = None
+
+try:
+    from langchain_community.document_loaders import WebBaseLoader
+    from langchain.text_splitter import CharacterTextSplitter
+    from langchain_openai import OpenAIEmbeddings
+    from langchain_community.vectorstores import Chroma
+    LANGCHAIN_AVAILABLE = True
+except ImportError:
+    WebBaseLoader = None
+    CharacterTextSplitter = None
+    OpenAIEmbeddings = None
+    Chroma = None
+    LANGCHAIN_AVAILABLE = False
+
 import constants as ct
 
 
@@ -115,6 +130,12 @@ def initialize_retriever():
     if "retriever" in st.session_state:
         return
     
+    # LangChainが利用できない場合はスキップ
+    if not LANGCHAIN_AVAILABLE:
+        logger.warning("LangChain packages not available, skipping retriever initialization")
+        st.session_state.retriever = None
+        return
+    
     # OpenAI APIキーの確認
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if not openai_api_key:
@@ -174,17 +195,23 @@ def load_data_sources():
     # ファイル読み込みの実行（渡した各リストにデータが格納される）
     recursive_file_check(ct.RAG_TOP_FOLDER_PATH, docs_all)
 
-    web_docs_all = []
-    # ファイルとは別に、指定のWebページ内のデータも読み込み
-    # 読み込み対象のWebページ一覧に対して処理
-    for web_url in ct.WEB_URL_LOAD_TARGETS:
-        # 指定のWebページを読み込み
-        loader = WebBaseLoader(web_url)
-        web_docs = loader.load()
-        # for文の外のリストに読み込んだデータソースを追加
-        web_docs_all.extend(web_docs)
-    # 通常読み込みのデータソースにWebページのデータを追加
-    docs_all.extend(web_docs_all)
+    # WebBaseLoaderが利用可能な場合のみWebページデータを読み込み
+    if WebBaseLoader is not None:
+        web_docs_all = []
+        # ファイルとは別に、指定のWebページ内のデータも読み込み
+        # 読み込み対象のWebページ一覧に対して処理
+        for web_url in ct.WEB_URL_LOAD_TARGETS:
+            try:
+                # 指定のWebページを読み込み
+                loader = WebBaseLoader(web_url)
+                web_docs = loader.load()
+                # for文の外のリストに読み込んだデータソースを追加
+                web_docs_all.extend(web_docs)
+            except Exception as e:
+                logger = logging.getLogger(ct.LOGGER_NAME)
+                logger.warning(f"Failed to load web content from {web_url}: {e}")
+        # 通常読み込みのデータソースにWebページのデータを追加
+        docs_all.extend(web_docs_all)
 
     return docs_all
 
