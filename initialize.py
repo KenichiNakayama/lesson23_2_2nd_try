@@ -42,8 +42,14 @@ def initialize():
     initialize_session_id()
     # ログ出力の設定
     initialize_logger()
-    # RAGのRetrieverを作成
-    initialize_retriever()
+    # RAGのRetrieverを作成（環境変数チェック付き）
+    try:
+        initialize_retriever()
+    except Exception as e:
+        logger = logging.getLogger(ct.LOGGER_NAME)
+        logger.warning(f"Retriever initialization failed: {e}")
+        # Retrieverなしでもアプリが動作するように空のRetrieverを設定
+        st.session_state.retriever = None
 
 
 def initialize_logger():
@@ -107,6 +113,13 @@ def initialize_retriever():
 
     # すでにRetrieverが作成済みの場合、後続の処理を中断
     if "retriever" in st.session_state:
+        return
+    
+    # OpenAI APIキーの確認
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    if not openai_api_key:
+        logger.warning("OPENAI_API_KEY not found in environment variables")
+        st.session_state.retriever = None
         return
     
     # RAGの参照先となるデータソースの読み込み
