@@ -21,9 +21,35 @@ def display_app_title():
     st.markdown(f"## {ct.APP_NAME}")
 
 
+# 問題3 アプリの見た目変更
+def display_sidebar_mode_selection():
+    """
+    サイドバーに利用目的選択とモード説明を表示
+    """
+    with st.sidebar:
+        st.markdown("## 利用目的")
+        
+        # ラジオボタンで回答モードを選択
+        st.session_state.mode = st.radio(
+            label="モード選択",
+            options=[ct.ANSWER_MODE_1, ct.ANSWER_MODE_2],
+            label_visibility="collapsed"
+        )
+        
+        # 選択されたモードに応じた説明を表示
+        if st.session_state.mode == ct.ANSWER_MODE_1:
+            st.markdown("**【「社内文書検索」を選択した場合】**")
+            st.info("入力内容と関連性が高い社内文書のありかを検索できます。")
+            st.code("【入力例】\n社員の育成方針に関するMTGの議事録", wrap_lines=True, language=None)
+        else:
+            st.markdown("**【「社内問い合わせ」を選択した場合】**")
+            st.info("質問・要望に対して、社内文書の情報をもとに回答を得られます。")
+            st.code("【入力例】\n人事部に所属している従業員情報を一覧化して", wrap_lines=True, language=None)
+
+
 def display_select_mode():
     """
-    回答モードのラジオボタンを表示
+    回答モードのラジオボタンを表示（旧関数 - 使用しない）
     """
     # 回答モードを選択する用のラジオボタンを表示
     col1, col2 = st.columns([100, 1])
@@ -41,21 +67,14 @@ def display_initial_ai_message():
     AIメッセージの初期表示
     """
     with st.chat_message("assistant"):
-        # 「st.success()」とすると緑枠で表示される
-        st.markdown("こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。上記で利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。")
-
-        # 「社内文書検索」の機能説明
-        st.markdown("**【「社内文書検索」を選択した場合】**")
-        # 「st.info()」を使うと青枠で表示される
-        st.info("入力内容と関連性が高い社内文書のありかを検索できます。")
-        # 「st.code()」を使うとコードブロックの装飾で表示される
-        # 「wrap_lines=True」で折り返し設定、「language=None」で非装飾とする
-        st.code("【入力例】\n社員の育成方針に関するMTGの議事録", wrap_lines=True, language=None)
-
-        # 「社内問い合わせ」の機能説明
-        st.markdown("**【「社内問い合わせ」を選択した場合】**")
-        st.info("質問・要望に対して、社内文書の情報をもとに回答を得られます。")
-        st.code("【入力例】\n人事部に所属している従業員情報を一覧化して", wrap_lines=True, language=None)
+        st.markdown("こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。サイドバーで利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。")
+        
+        # 現在選択されているモードに応じた簡単な注意事項を表示
+        if hasattr(st.session_state, 'mode'):
+            if st.session_state.mode == ct.ANSWER_MODE_1:
+                st.warning("具体的に入力したものと関連性の高い回答を得やすいです。")
+            else:
+                st.warning("質問・要望に対して、社内文書の情報をもとに回答を得られます。")
 
 
 def display_conversation_log():
