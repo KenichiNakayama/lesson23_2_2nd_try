@@ -40,20 +40,14 @@ def display_sidebar_mode_selection():
         st.markdown("---")  # 区切り線
         
         # 社内文書検索モードの説明
-        if st.session_state.mode == ct.ANSWER_MODE_1:
-            st.markdown("**【社内文書検索（選択中）】**")
-        else:
-            st.markdown("**【社内文書検索】**")
+        st.markdown("**【社内文書検索】**")
         st.info("入力内容と関連性が高い社内文書のありかを検索できます。")
         st.code("【入力例】\n社員の育成方針に関するMTGの議事録", wrap_lines=True, language=None)
         
         st.markdown("")  # スペース
         
         # 社内問い合わせモードの説明
-        if st.session_state.mode == ct.ANSWER_MODE_2:
-            st.markdown("**【社内問い合わせ（選択中）】**")
-        else:
-            st.markdown("**【社内問い合わせ】**")
+        st.markdown("**【社内問い合わせ】**")
         st.info("質問・要望に対して、社内文書の情報をもとに回答を得られます。")
         st.code("【入力例】\n人事部に所属している従業員情報を一覧化して", wrap_lines=True, language=None)
 
