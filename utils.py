@@ -69,6 +69,13 @@ def get_llm_response(chat_message):
     Returns:
         LLMからの回答
     """
+    # Retrieverが利用できない場合のエラーハンドリング
+    if not hasattr(st.session_state, 'retriever') or st.session_state.retriever is None:
+        return {
+            "answer": "申し訳ございません。現在、システムの初期化に問題があり、回答を生成できません。しばらくしてから再度お試しください。",
+            "context": []
+        }
+    
     # LLMのオブジェクトを用意
     llm = ChatOpenAI(model_name=ct.MODEL, temperature=ct.TEMPERATURE)
 
@@ -109,8 +116,14 @@ def get_llm_response(chat_message):
     chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
     # LLMへのリクエストとレスポンス取得
-    llm_response = chain.invoke({"input": chat_message, "chat_history": st.session_state.chat_history})
-    # LLMレスポンスを会話履歴に追加
-    st.session_state.chat_history.extend([HumanMessage(content=chat_message), llm_response["answer"]])
-
-    return llm_response
+    try:
+        llm_response = chain.invoke({"input": chat_message, "chat_history": st.session_state.chat_history})
+        # LLMレスポンスを会話履歴に追加
+        st.session_state.chat_history.extend([HumanMessage(content=chat_message), llm_response["answer"]])
+        return llm_response
+    except Exception as e:
+        # APIエラーや通信エラーの場合のフォールバック
+        return {
+            "answer": f"申し訳ございません。一時的な問題により回答を生成できませんでした。APIキーの確認やネットワーク接続をご確認の上、再度お試しください。\n\nエラー詳細: {str(e)[:100]}",
+            "context": []
+        }

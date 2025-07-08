@@ -143,8 +143,26 @@ def initialize_retriever():
         st.session_state.retriever = None
         return
     
+    # APIキーの基本的な形式チェック
+    if not openai_api_key.startswith(("sk-", "sk-proj-")):
+        logger.warning(f"Invalid OPENAI_API_KEY format: starts with {openai_api_key[:10]}...")
+        st.session_state.retriever = None
+        return
+    
+    logger.info(f"Using OpenAI API key starting with: {openai_api_key[:15]}...")
+    
     # RAGの参照先となるデータソースの読み込み
-    docs_all = load_data_sources()
+    try:
+        docs_all = load_data_sources()
+        if not docs_all:
+            logger.warning("No documents loaded for RAG")
+            st.session_state.retriever = None
+            return
+        logger.info(f"Loaded {len(docs_all)} documents for RAG")
+    except Exception as e:
+        logger.error(f"Failed to load data sources: {e}")
+        st.session_state.retriever = None
+        return
 
     # OSがWindowsの場合、Unicode正規化と、cp932（Windows用の文字コード）で表現できない文字を除去
     for doc in docs_all:
@@ -153,7 +171,15 @@ def initialize_retriever():
             doc.metadata[key] = adjust_string(doc.metadata[key])
     
     # 埋め込みモデルの用意
-    embeddings = OpenAIEmbeddings()
+    try:
+        embeddings = OpenAIEmbeddings()
+        # 簡単なテストを実行してAPIキーが有効か確認
+        test_embedding = embeddings.embed_query("test")
+        logger.info("OpenAI embeddings initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize OpenAI embeddings: {e}")
+        st.session_state.retriever = None
+        return
     
     # チャンク分割用のオブジェクトを作成
     # 問題2: マジックナンバーを修正
@@ -165,14 +191,27 @@ def initialize_retriever():
 
     # チャンク分割を実施
     splitted_docs = text_splitter.split_documents(docs_all)
+    logger.info(f"Split documents into {len(splitted_docs)} chunks")
 
     # ベクターストアの作成
-    db = Chroma.from_documents(splitted_docs, embedding=embeddings)
+    try:
+        db = Chroma.from_documents(splitted_docs, embedding=embeddings)
+        logger.info("Vector store created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create vector store: {e}")
+        st.session_state.retriever = None
+        return
 
     # ベクターストアを検索するRetrieverの作成
     # 問題1: kの値を3から5に変更
     # 問題2: マジックナンバーを修正
-    st.session_state.retriever = db.as_retriever(search_kwargs={"k": ct.RAG_SEARCH_K})
+    try:
+        st.session_state.retriever = db.as_retriever(search_kwargs={"k": ct.RAG_SEARCH_K})
+        logger.info(f"Retriever initialized successfully with k={ct.RAG_SEARCH_K}")
+    except Exception as e:
+        logger.error(f"Failed to create retriever: {e}")
+        st.session_state.retriever = None
+        return
 
 
 def initialize_session_state():

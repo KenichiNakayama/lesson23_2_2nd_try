@@ -39,11 +39,34 @@ logger = logging.getLogger(ct.LOGGER_NAME)
 try:
     # 初期化処理（「initialize.py」の「initialize」関数を実行）
     initialize()
+    
+    # 初期化後の状態確認
+    if not hasattr(st.session_state, 'retriever') or st.session_state.retriever is None:
+        st.warning("⚠️ システムの一部機能が利用できません。ログファイルでエラー詳細を確認してください。", icon="⚠️")
+        
 except Exception as e:
     # エラーログの出力
     logger.error(f"{ct.INITIALIZE_ERROR_MESSAGE}\n{e}")
     # エラーメッセージの画面表示
-    st.error(utils.build_error_message(ct.INITIALIZE_ERROR_MESSAGE), icon=ct.ERROR_ICON)
+    error_msg = f"""
+    ### 🔧 システム初期化エラー
+    
+    申し訳ございません。システムの初期化に失敗しました。
+    
+    **考えられる原因:**
+    - OpenAI APIキーが無効または期限切れ
+    - 必要なパッケージが不足している
+    - ネットワーク接続に問題がある
+    - データファイルの読み込みに失敗した
+    
+    **対処方法:**
+    1. `.env`ファイルのAPIキーを確認してください
+    2. インターネット接続を確認してください
+    3. しばらく時間をおいてから再度アクセスしてください
+    
+    **エラー詳細:** `{str(e)[:200]}...`
+    """
+    st.error(error_msg, icon=ct.ERROR_ICON)
     # 後続の処理を中断
     st.stop()
 
